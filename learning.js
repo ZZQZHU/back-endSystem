@@ -23,19 +23,6 @@ app.use(cors(corsOptions));
 // 假设用户的原始密码是 'mysecretpassword'
 // const plainPassword = 'mysecretpassword';
 
-// bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
-//     if (err) {
-//         console.error(err);
-//         return;
-//     }
-//     // 将哈希后的密码存储到数据库中
-//     try {
-//         const users = await db.query(`INSERT INTO user (username, password) VALUES (?, ?)`, ['username', hash]);
-//         console.log('User registered successfully');
-//     } catch (error) {
-//         console.error(error);
-//     }
-// });
 
 
 // 生成Token
@@ -123,16 +110,22 @@ app.use('/refreshToken', (req, res) => {
 
 // 注册用户
 app.use('/Userregistration', (req, res) => {
-    const refreshToken = req.headers.authorization;
-    try {
-        const decoded = jwt.verify(refreshToken.split(' ')[1], refresh_secret);
-        const { userId } = decoded;
-        const newAccessToken = jwt.sign({ userId }, secret, { expiresIn: '1h' });
-        // 发送新的AccessToken给客户端
-        res.json({ accessToken: newAccessToken });
-    } catch (err) {
-        return res.status(401).json({ message: 'Token验证失败' });
-    }
+    // 现在，req.body 包含从前端传递的JSON数据
+    const plainPassword = req.body.Password;
+    const username = req.body.username;
+    bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        // 将哈希后的密码存储到数据库中
+        try {
+            const users = await db.query(`INSERT INTO user (name, password) VALUES (?, ?)`, [username, hash]);
+            res.send(true);
+        } catch (error) {
+            res.send(false);
+        }
+    });
 });
 
 
