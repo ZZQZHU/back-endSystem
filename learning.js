@@ -20,6 +20,9 @@ const corsOptions = {
 app.use(cors(corsOptions));
 
 
+app.use(express.json());
+
+
 // 假设用户的原始密码是 'mysecretpassword'
 // const plainPassword = 'mysecretpassword';
 
@@ -113,6 +116,10 @@ app.use('/Userregistration', (req, res) => {
     // 现在，req.body 包含从前端传递的JSON数据
     const plainPassword = req.body.Password;
     const username = req.body.username;
+    const email = req.body.email;
+    const phone = req.body.phone;
+    const userId = username + ';' + plainPassword
+    console.log(req.body)
     bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
         if (err) {
             console.error(err);
@@ -120,8 +127,8 @@ app.use('/Userregistration', (req, res) => {
         }
         // 将哈希后的密码存储到数据库中
         try {
-            const users = await db.query(`INSERT INTO user (name, password) VALUES (?, ?)`, [username, hash]);
-            res.send(true);
+            const users = await db.query(`INSERT INTO user (name, password,email,phone) VALUES (?, ?,?,?)`, [username, hash, email, phone]);
+            res.json(generateToken(userId))
         } catch (error) {
             res.send(false);
         }
