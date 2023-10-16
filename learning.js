@@ -65,12 +65,39 @@ app.use('/Login', async(req, res, next) => {
     // 从查询参数中获取手机号和密码
     const name = req.query.username;
     const password = req.query.password;
-    const userId = name + ';' + password
+    console.log(req.query)
         // 模拟身份验证逻辑
     try {
-        const users = await db.query(`SELECT * FROM user WHERE name = ? AND password = ?`, [name, password]);
+        const users = await db.query(`SELECT * FROM user WHERE name = ?`, [name]);
+        const hashFromDatabase = users[0].password;
+        // const users = await db.query(`SELECT * FROM user WHERE name = ? AND password = ?`, [name, password]);
         if (users.length > 0) {
-            res.json(generateToken(userId)); // 如果有结果，返回token
+            bcrypt.compare(password, hashFromDatabase, (err, result) => {
+                if (err) {
+                    console.error(err);
+                    res.send(false);
+                    return;
+                }
+
+                if (result) {
+                    bcrypt.hash(password, saltRounds, async(err, hash) => {
+                        if (err) {
+                            console.error(err);
+                            return;
+                        }
+                        // 将哈希后的密码存储到数据库中
+                        try {
+                            const userId = name + ';' + hash
+                            console.log(userId)
+                            res.json(generateToken(userId))
+                        } catch (error) {
+                            res.send(false);
+                        }
+                    });
+                } else {
+                    res.send(false);
+                }
+            });
         } else {
             res.send(false); // 如果没有结果，返回false
         }
@@ -118,7 +145,6 @@ app.use('/Userregistration', (req, res) => {
     const username = req.body.username;
     const email = req.body.email;
     const phone = req.body.phone;
-    const userId = username + ';' + plainPassword
     console.log(req.body)
     bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
         if (err) {
@@ -127,10 +153,45 @@ app.use('/Userregistration', (req, res) => {
         }
         // 将哈希后的密码存储到数据库中
         try {
+            const userId = username + ';' + hash
+            console.log(userId)
             const users = await db.query(`INSERT INTO user (name, password,email,phone) VALUES (?, ?,?,?)`, [username, hash, email, phone]);
             res.json(generateToken(userId))
         } catch (error) {
             res.send(false);
+        }
+    });
+});
+
+
+
+// 忘记密码
+app.use('/ForgotPassword', (req, res) => {
+    // 现在，req.body 包含从前端传递的JSON数据
+    const username = req.body.username;
+    const plainPassword = req.body.password;
+    const email = req.body.email;
+    const phone = req.body.phone;
+    console.log(req.body)
+    bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
+        if (err) {
+            console.error(err);
+            return;
+        }
+        // 将哈希后的密码存储到数据库中
+        try {
+            const userId = username + ';' + hash
+            console.log(userId)
+            const users = await db.query(`SELECT * FROM user WHERE phone= ? AND email = ?`, [phone, email]);
+            if (users.length > 0) {
+                const state = await db.query(`UPDATE user SET password = ? WHERE phone = ? AND email = ?`, [hash, phone, email]);
+                res.json(generateToken(userId))
+            } else {
+                res.send('0');
+            }
+
+        } catch (error) {
+            res.send('1');
         }
     });
 });
