@@ -69,16 +69,15 @@ app.use('/Login', async(req, res, next) => {
         // 模拟身份验证逻辑
     try {
         const users = await db.query(`SELECT * FROM user WHERE name = ?`, [name]);
-        const hashFromDatabase = users[0].password;
         // const users = await db.query(`SELECT * FROM user WHERE name = ? AND password = ?`, [name, password]);
         if (users.length > 0) {
+            const hashFromDatabase = users[0].password;
             bcrypt.compare(password, hashFromDatabase, (err, result) => {
                 if (err) {
                     console.error(err);
                     res.send(false);
                     return;
                 }
-
                 if (result) {
                     bcrypt.hash(password, saltRounds, async(err, hash) => {
                         if (err) {
@@ -108,7 +107,7 @@ app.use('/Login', async(req, res, next) => {
 
 // 中间件函数(接口)：用于验证用户登录状态
 app.use('/checkLogin', verifyToken, async(req, res, next) => {
-    var arrdata = req.userId.split(';')
+    var arrdata = req.headers.authorization.split(';')
     const name = arrdata[0];
     const password = arrdata[1];
     try {
