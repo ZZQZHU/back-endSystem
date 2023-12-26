@@ -9,17 +9,21 @@ const cors = require('cors'); // 导入 CORS 中间件
 // 配置允许的来源
 const corsOptions = config.corsOptions;
 // 启用 CORS 中间件，允许所有来源的请求
-app.use(cors(corsOptions));
+app.use(cors());
 app.use(express.json()); // 解析请求体中的 JSON 数据
 
 
-const apiRoutes=require('./controllers/api/index')  //导入api接口路由
+
+const apiRoutes = require('./controllers/api/index')  //导入api接口路由
 app.use('/api', apiRoutes);
+
+const openaiRoutes = require('./controllers/openai/index')  //导入openai接口路由
+app.use('/openai', openaiRoutes);
 
 // 错误处理中间件：记录接口调用失败日志
 app.use(errorHandler);
 
-app.listen(port, () => {
+app.listen(port, '0.0.0.0', () => {
     console.log(`运行起来了 ${port}`);
 });
 

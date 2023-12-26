@@ -11,11 +11,11 @@ const refresh_secret = process.env.REFRESH_SECRET; //refresh token加密解密�
 const jwt = require('jsonwebtoken'); // 导入 jsonwebtoken 模块
 
 // 中间件函数(接口)：用于验证用户身份
-router.use('/gologin', async(req, res, next) => {
+router.use('/gologin', async (req, res, next) => {
     // 从查询参数中获取手机号和密码
     const name = req.query.username;
     const password = req.query.password;
-        // 模拟身份验证逻辑
+    // 模拟身份验证逻辑
     try {
         const users = await db.query(`SELECT * FROM user WHERE name = ?`, [name]);
         if (users.length > 0) {
@@ -27,7 +27,7 @@ router.use('/gologin', async(req, res, next) => {
                     return;
                 }
                 if (result) {
-                    bcrypt.hash(password, saltRounds, async(err, hash) => {
+                    bcrypt.hash(password, saltRounds, async (err, hash) => {
                         if (err) {
                             console.error(err);
                             return;
@@ -53,7 +53,7 @@ router.use('/gologin', async(req, res, next) => {
 });
 
 // 中间件函数(接口)：用于验证用户登录状态
-router.use('/checkLogin', verifyToken, async(req, res, next) => {
+router.use('/checkLogin', verifyToken, async (req, res, next) => {
     var arrdata = req.userId.split(';')
     const name = arrdata[0];
     const password = arrdata[1];
@@ -73,7 +73,6 @@ router.use('/checkLogin', verifyToken, async(req, res, next) => {
 
 // 使用Refresh Token获取新Token
 router.use('/refreshToken', (req, res) => {
-    console.log('111111')
     const refreshToken = req.headers.authorization;
     try {
         const decoded = jwt.verify(refreshToken.split(' ')[1], refresh_secret);
@@ -88,16 +87,13 @@ router.use('/refreshToken', (req, res) => {
 
 // 注册用户
 router.use('/Userregistration', (req, res) => {
+    console.log("注册")
     // 现在，req.body 包含从前端传递的JSON数据
     const plainPassword = req.body.Password;
     const username = req.body.username;
     const email = req.body.email;
     const phone = req.body.phone;
-    bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
-        if (err) {
-            console.error(err);
-            return;
-        }
+    bcrypt.hash(plainPassword, saltRounds, async (err, hash) => {
         // 将哈希后的密码存储到数据库中
         try {
             const userId = username + ';' + hash
@@ -118,7 +114,7 @@ router.use('/ForgotPassword', (req, res) => {
     const plainPassword = req.body.password;
     const email = req.body.email;
     const phone = req.body.phone;
-    bcrypt.hash(plainPassword, saltRounds, async(err, hash) => {
+    bcrypt.hash(plainPassword, saltRounds, async (err, hash) => {
         if (err) {
             console.error(err);
             return;
