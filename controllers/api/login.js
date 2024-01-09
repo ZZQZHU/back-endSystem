@@ -10,8 +10,10 @@ const secret = process.env.SECRET_KEY; //token加密解密的密钥
 const refresh_secret = process.env.REFRESH_SECRET; //refresh token加密解密的密钥
 const jwt = require('jsonwebtoken'); // 导入 jsonwebtoken 模块
 
+const apiLimiter = require('./../../middleware/safe').apiLimiter
+
 // 中间件函数(接口)：用于验证用户身份
-router.use('/gologin', async (req, res, next) => {
+router.use('/gologin', apiLimiter, async (req, res, next) => {
     // 从查询参数中获取手机号和密码
     const name = req.query.username;
     const password = req.query.password;
@@ -53,7 +55,7 @@ router.use('/gologin', async (req, res, next) => {
 });
 
 // 中间件函数(接口)：用于验证用户登录状态
-router.use('/checkLogin', verifyToken, async (req, res, next) => {
+router.use('/checkLogin', apiLimiter, verifyToken, async (req, res, next) => {
     var arrdata = req.userId.split(';')
     const name = arrdata[0];
     const password = arrdata[1];
@@ -72,7 +74,7 @@ router.use('/checkLogin', verifyToken, async (req, res, next) => {
 
 
 // 使用Refresh Token获取新Token
-router.use('/refreshToken', (req, res) => {
+router.use('/refreshToken', apiLimiter, (req, res) => {
     const refreshToken = req.headers.authorization;
     try {
         const decoded = jwt.verify(refreshToken.split(' ')[1], refresh_secret);
@@ -86,7 +88,7 @@ router.use('/refreshToken', (req, res) => {
 });
 
 // 注册用户
-router.use('/Userregistration', (req, res) => {
+router.use('/Userregistration', apiLimiter, (req, res) => {
     console.log("注册")
     // 现在，req.body 包含从前端传递的JSON数据
     const plainPassword = req.body.Password;
@@ -108,7 +110,7 @@ router.use('/Userregistration', (req, res) => {
 
 
 // 忘记密码
-router.use('/ForgotPassword', (req, res) => {
+router.use('/ForgotPassword', apiLimiter, (req, res) => {
     // 现在，req.body 包含从前端传递的JSON数据
     const username = req.body.username;
     const plainPassword = req.body.password;

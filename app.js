@@ -23,7 +23,7 @@ app.use('/openai', openaiRoutes);
 // 错误处理中间件：记录接口调用失败日志
 app.use(errorHandler);
 
-app.listen(port, '0.0.0.0', () => {
+app.listen(port, () => {
     console.log(`运行起来了 ${port}`);
 });
 
