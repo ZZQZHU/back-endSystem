@@ -16,10 +16,11 @@ const apiLimiter = require('./../../middleware/safe').apiLimiter
 router.use('/gologin', apiLimiter, async (req, res, next) => {
     // 从查询参数中获取手机号和密码
     const name = req.query.username;
+    const email = req.query.email;
     const password = req.query.password;
     // 模拟身份验证逻辑
     try {
-        const users = await db.query(`SELECT * FROM user WHERE name = ?`, [name]);
+        const users = await db.query(`SELECT * FROM user WHERE name = ? AND email = ?`, [name, email]);
         if (users.length > 0) {
             const hashFromDatabase = users[0].password;
             bcrypt.compare(password, hashFromDatabase, (err, result) => {
@@ -34,9 +35,9 @@ router.use('/gologin', apiLimiter, async (req, res, next) => {
                             console.error(err);
                             return;
                         }
-                        // 将哈希后的密码存储到数据库中
                         try {
-                            const userId = name + ';' + hash
+                            const user_id = users[0].user_id
+                            const userId = user_id + ';' + hash
                             res.json(generateToken(userId))
                         } catch (error) {
                             res.send(false);
@@ -105,6 +106,26 @@ router.use('/Userregistration', apiLimiter, (req, res) => {
             res.send(false);
         }
     });
+});
+
+
+// 根据token获取用户信息
+router.use('/userinfo', apiLimiter, verifyToken, async (req, res) => {
+    var arrdata = req.userId.split(';')
+    const user_id = arrdata[0];
+    // 从数据库中获取用户信息
+    try {
+        const users = await db.query(`SELECT * FROM user WHERE user_id = ?`, [user_id]);
+        if (users.length > 0) {
+            // 只将将用户信息name eamil 头像profile_picture_url 发送给客户端
+            res.json({ user_id: user_id, name: users[0].name, email: users[0].email, profile_picture_url: users[0].profile_picture_url });
+
+        } else {
+            res.send(false);
+        }
+    } catch (error) {
+        res.send(false);
+    }
 });
 
 

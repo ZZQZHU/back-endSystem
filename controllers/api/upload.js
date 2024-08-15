@@ -1,9 +1,9 @@
 const express = require('express');
-const multer = require('multer');
+const multer = require('multer'); // 处理上传的文件
 const crypto = require('crypto');
 const path = require('path');
 const db = require('./../../sql/db') // 导入数据库连接
-
+const { generateToken, verifyToken } = require('./../../middleware/token'); // 导入Token中间件
 const apiLimiter = require('./../../middleware/safe').apiLimiter
 
 
@@ -41,16 +41,14 @@ router.post('/uploadimg', apiLimiter, upload.single('file'), async (req, res) =>
         }
         console.log(req.file);  // 输出上传的文件信息
         // 构造图片URL
-        const imageUrl = `http://116.62.189.123:88/imgs/${req.file.filename}`;
+        const imageUrl = `https://static.aiblog.top/imgs/${req.file.filename}`;
         // 将图片信息插入到数据库中
         const imageInfo = {
-            post_id: "12312435776769", // 从请求中获取博文ID，这需要根据你的实际前端请求进行修改
             image_url: imageUrl,
-            ispreserve: 0, // 默认值，你可以根据需要修改
+            ispreserve: 1, // 默认值，你可以根据需要修改
         };
-        const AddImg = await db.query(`INSERT INTO postimages (image_id, post_id, image_url, ispreserve)
-        VALUES  (UUID(), ?,?,?);`, ["12312435776769", imageUrl, 0], (err, result) => {
-
+        const AddImg = await db.query(`INSERT INTO postimages (image_id, image_url, ispreserve)
+        VALUES  (UUID(),?,?);`, [imageUrl, 1], (err, result) => {
             if (err) {
                 console.log(err);
             }
@@ -62,6 +60,53 @@ router.post('/uploadimg', apiLimiter, upload.single('file'), async (req, res) =>
     } catch (error) {
         console.error("Error uploading file:", error);
         res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+// 处理修改图片保存状态请求
+router.post('/preserve', apiLimiter, async (req, res) => {
+    try {
+        // 获取图片数组
+        const imageurlArr = req.body.imagearr;
+        // 遍历图片数组，逐个修改保存状态
+        for (let i = 0; i < imageurlArr.length; i++) {
+            const updateImg = await db.query(`UPDATE postimages SET ispreserve = 0 WHERE image_url = ?;`, [imageurlArr[i]], (err, result) => {
+                if (err) {
+                    console.log(err);
+                }
+            });
+        }
+        // 返回成功
+        res.json({ success: true });
+    } catch (error) {
+        console.error("Error preserving image:", error);
+        res.status(500).json({ error: 'Internal server error' });
+    }
+});
+
+
+// 上传博文详情
+router.post('/uploadblog', apiLimiter, verifyToken, async (req, res) => {
+    try {
+        const { title, content, summary, type, tag, img, blogid } = req.body;
+        const arrdata = req.userId.split(';')
+        const user_id = arrdata[0];
+        console.log(user_id, title, summary, type, tag, img, blogid)
+        const date = new Date();
+        const AddBlog = await db.query(`INSERT INTO posts (post_id, user_id, title, content, summary, type, tag, cover_image_url, is_publish,is_deleted,is_approved,publish_time) VALUES  (?,?,?,?,?,?,?,?,?,?,?,?);`, [blogid, user_id, title, content, summary, type, tag, img, true, false, true, date], (err, result) => {
+            if (err) {
+                console.log(err);
+            } else {
+                console.log(result);
+            }
+        });
+        res.send(true)
+
+
+    }
+    catch (error) {
+        console.log(error)
+        res.send(false);    // 处理错误
     }
 });
 

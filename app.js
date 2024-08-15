@@ -1,8 +1,10 @@
 // app.js
 const express = require('express');
+const app = express();
+
+
 require('dotenv').config(); //.env文件中读取环境变量并使其在process.env中可用
 const config = require('./config')
-const app = express();
 const port = config.Port;
 const errorHandler = require('./middleware/logerror');   // 导入错误处理中间件(记录接口调用失败日志)
 const cors = require('cors'); // 导入 CORS 中间件
@@ -13,12 +15,21 @@ app.use(cors());
 app.use(express.json()); // 解析请求体中的 JSON 数据
 
 
-
 const apiRoutes = require('./controllers/api/index')  //导入api接口路由
 app.use('/api', apiRoutes);
 
 const openaiRoutes = require('./controllers/openai/index')  //导入openai接口路由
 app.use('/openai', openaiRoutes);
+
+const wxapiRoutes = require('./controllers/wxapi/index')    //导入微信小程序接口路由
+app.use('/wxapi', wxapiRoutes);
+
+const KimiRoutes = require('./controllers/kimi/index')    //导入Kimi接口路由
+app.use('/Kimi', KimiRoutes);
+
+const DifyRoutes = require('./controllers/dify/index')    //导入dify接口路由
+app.use('/Dify', DifyRoutes);
+
 
 // 错误处理中间件：记录接口调用失败日志
 app.use(errorHandler);

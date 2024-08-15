@@ -5,7 +5,7 @@ const jwt = require('jsonwebtoken'); // 导入 jsonwebtoken 模块
 
 // 生成Token
 function generateToken(userId) {
-    const token = jwt.sign({ userId }, secret, { expiresIn: '10s' }); // 这里的 expiresIn 选项设置了Token的过期时间
+    const token = jwt.sign({ userId }, secret, { expiresIn: '1d' }); // 这里的 expiresIn 选项设置了Token的过期时间
     const refreshToken = jwt.sign({ userId }, refresh_secret, { expiresIn: '7d' });
     return { "token": token, "refreshToken": refreshToken };
 }
@@ -18,7 +18,7 @@ function verifyToken(req, res, next) {
     }
     try {
         const decoded = jwt.verify(token.split(' ')[1], secret);
-        console.log(decoded,"token验证成功")
+        console.log(decoded, "token验证成功")
         req.userId = decoded.userId;
         next();
     } catch (err) {
